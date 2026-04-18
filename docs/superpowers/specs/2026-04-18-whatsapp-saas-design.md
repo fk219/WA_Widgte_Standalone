@@ -53,9 +53,21 @@ A dedicated Lightning App available only to System Administrators for configurin
     *   Stores direction, status, timestamps, media URLs, and the sender's User lookup.
 *   **Accessibility:** Because messages are stored in a standard Custom Object, Salesforce Admins can easily build standard Salesforce Reports and Dashboards to audit chat history, agent response times, and message volume.
 
-## 5. Brainstorming: Missing Features & Considerations
+## 5. Compliance & Advanced Features
+
+### 5.1 The WhatsApp 24-Hour Customer Service Window
+Meta enforces a strict rule where businesses can only send free-form messages within 24 hours of a customer's last inbound message. Outside this window, only pre-approved templates are allowed.
+*   **Countdown Timer UI:** The chat widget will display a real-time countdown (e.g., "⏱️ 14h 30m remaining to reply") based on the timestamp of the last inbound message.
+*   **Auto-Lock Input:** Once the 24-hour window expires, the standard text input box and media upload buttons will automatically disable. The UI will prompt the agent with a "Send Template" button, enforcing Meta's compliance rules at the UI level.
+
+### 5.2 Chat History Archiving (Storage Management)
+To prevent customers from hitting their Salesforce data and file storage limits (which are expensive), the app includes automated archiving.
+*   **Auto-Archive Batch Job:** In the Admin Setup Wizard, admins can configure retention policies:
+    *   *Example:* "Delete Media Files older than [ 6 ] months."
+    *   *Example:* "Export chat history to PDF, attach to the parent record, and delete individual `WhatsApp_Message__c` records after [ 1 ] year."
+*   **Scheduled Execution:** A daily Apex Scheduled Job will run these rules automatically in the background.
+
+## 6. Brainstorming: Missing Features & Considerations
 
 *   **Opt-Out / Consent Management:** Critical for compliance (GDPR/TCPA). We need a mechanism to flag a record as "Do Not WhatsApp" and physically block the widget from sending outbound messages to that number.
-*   **24-Hour Customer Service Window:** WhatsApp enforces a strict 24-hour rule. If a customer hasn't replied in 24 hours, the agent *must* use a pre-approved Template. The widget needs logic to calculate this window and restrict the text input box, forcing the user to select a template if the window is closed.
-*   **File Storage Limits:** Media files take up significant Salesforce file storage space. Consider a feature in the Admin Setup to automatically purge media older than X months to save costs for the client.
 *   **Concurrent Webhook Limits:** High volumes of incoming messages could hit Apex concurrent execution limits. The webhook should immediately insert a raw staging record and use an asynchronous Platform Event Trigger to process the actual logic and media downloading.
