@@ -67,7 +67,20 @@ To prevent customers from hitting their Salesforce data and file storage limits 
     *   *Example:* "Export chat history to PDF, attach to the parent record, and delete individual `WhatsApp_Message__c` records after [ 1 ] year."
 *   **Scheduled Execution:** A daily Apex Scheduled Job will run these rules automatically in the background.
 
-## 6. Brainstorming: Missing Features & Considerations
+## 6. Omni-Channel Routing & The "WhatsApp Inbox"
+
+### 6.1 Unassigned & Unlicensed Lead Routing
+*   **Data Silos:** The sharing model is set to Private. Agents only see messages for leads they own.
+*   **Omni-Channel Fallback:** If an inbound message arrives for a Lead owned by an unlicensed user (e.g., a default Admin owner), the webhook creates a `PendingServiceRouting` record.
+*   **Agent Reassignment:** The message is pushed to a "WhatsApp Queue" via Omni-Channel. When a licensed agent accepts the work item, Salesforce automatically reassigns ownership of the Lead to that agent, granting them immediate access to the chat history.
+
+### 6.2 The "WhatsApp Inbox" LWC (WhatsApp Web Clone)
+In addition to the record-level widget, the app provides a full-page "Inbox" experience.
+*   **Two-Pane Layout:** A custom LWC tab that mimics WhatsApp Web. The left pane shows a list of all active conversations (grouped by Lead/Contact) sorted by the most recent message. The right pane shows the full chat history for the selected conversation.
+*   **Unread Indicators:** The left pane displays unread message badges.
+*   **Global Access:** Agents can manage 20 different conversations simultaneously from this single UI without needing to open 20 different Lead records.
+
+## 7. Brainstorming: Missing Features & Considerations
 
 *   **Opt-Out / Consent Management:** Critical for compliance (GDPR/TCPA). We need a mechanism to flag a record as "Do Not WhatsApp" and physically block the widget from sending outbound messages to that number.
 *   **Concurrent Webhook Limits:** High volumes of incoming messages could hit Apex concurrent execution limits. The webhook should immediately insert a raw staging record and use an asynchronous Platform Event Trigger to process the actual logic and media downloading.
