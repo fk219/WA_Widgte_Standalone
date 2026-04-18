@@ -13,17 +13,17 @@
 *Sprint Goal: Set up the secure metadata and genericize the `WhatsAppMessage__c` object so it can attach to any record (Lead, Contact, Custom).*
 
 ### Task 1.1: License & Setting Metadata
-- [ ] **Step 1:** Create Protected Hierarchy Custom Setting `App_License_Status__c` (Fields: `Status__c` Text).
-- [ ] **Step 2:** Create Protected Custom Metadata Type `WhatsApp_Provider_Setting__mdt`.
+- [x] **Step 1:** Create Protected Hierarchy Custom Setting `App_License_Status__c` (Fields: `Status__c` Text).
+- [x] **Step 2:** Create Protected Custom Metadata Type `WhatsApp_Provider_Setting__mdt`.
       Fields: `Provider_Type__c` (Picklist: 'Twilio', 'Meta'), `Twilio_Account_SID__c`, `Twilio_Auth_Token__c`, `Meta_App_ID__c`, `Meta_Access_Token__c`, `Phone_Number_ID__c`, `Business_Phone_Number__c`.
-- [ ] **Step 3:** Create Protected Custom Metadata Type `WhatsApp_Object_Mapping__mdt`.
+- [x] **Step 3:** Create Protected Custom Metadata Type `WhatsApp_Object_Mapping__mdt`.
       Fields: `Object_API_Name__c`, `Primary_Phone_Field__c`, `Country_Code_Field__c` (Optional).
 
 ### Task 1.2: Polymorphic Message Object
-- [ ] **Step 1:** Modify `WhatsAppMessage__c` object.
-- [ ] **Step 2:** Delete the hardcoded `Contact__c` Master-Detail field.
-- [ ] **Step 3:** Add `Parent_Record_Id__c` (Text 18) and `Parent_Object_API_Name__c` (Text 255).
-- [ ] **Step 4:** Ensure the object OWD is set to **Private**.
+- [x] **Step 1:** Modify `WhatsAppMessage__c` object.
+- [x] **Step 2:** Delete the hardcoded `Contact__c` Master-Detail field.
+- [x] **Step 3:** Add `Parent_Record_Id__c` (Text 18) and `Parent_Object_API_Name__c` (Text 255).
+- [x] **Step 4:** Ensure the object OWD is set to **Private**.
 
 ---
 
