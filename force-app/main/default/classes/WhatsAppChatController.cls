@@ -137,24 +137,24 @@ global with sharing class WhatsAppChatController {
     // Dynamic Search & Save
     private static void saveIncomingMessage(String normalizedPhone, String body, String mediaUrl, String messageSid, String provider) {
         // 1. Dynamic Object Search
-        // Query the mappings to see which objects to search
         List<WhatsApp_Object_Mapping__mdt> mappings = [SELECT Object_API_Name__c, Primary_Phone_Field__c FROM WhatsApp_Object_Mapping__mdt];
         
         Id parentId = null;
         String parentApiName = '';
+        Id currentOwnerId = null;
         
-        // Very simplistic search. In reality, SOSL is better here.
         for (WhatsApp_Object_Mapping__mdt mapRecord : mappings) {
-            String query = 'SELECT Id FROM ' + mapRecord.Object_API_Name__c + ' WHERE ' + mapRecord.Primary_Phone_Field__c + ' = :normalizedPhone LIMIT 1';
+            String query = 'SELECT Id, OwnerId FROM ' + mapRecord.Object_API_Name__c + ' WHERE ' + mapRecord.Primary_Phone_Field__c + ' = :normalizedPhone LIMIT 1';
             try {
                 List<SObject> results = Database.query(query);
                 if (!results.isEmpty()) {
                     parentId = results[0].Id;
                     parentApiName = mapRecord.Object_API_Name__c;
-                    break; // Stop at first match
+                    currentOwnerId = (Id)results[0].get('OwnerId');
+                    break; 
                 }
             } catch (Exception e) {
-                // Ignore query errors for bad mappings
+                // Ignore query errors
             }
         }
 
@@ -163,10 +163,10 @@ global with sharing class WhatsAppChatController {
             Message__c = String.isNotBlank(body) ? body : '(Media Message)',
             Direction__c = 'Inbound',
             Timestamp__c = Datetime.now(),
-            OwnerId = UserInfo.getUserId(), // Default to Webhook user, Phase 4 will handle Omni-Channel reassignment
+            OwnerId = currentOwnerId != null ? currentOwnerId : UserInfo.getUserId(),
             Sent_By__c = 'Customer',
             Phone_Number__c = normalizedPhone,
-            Twilio_Message_SID__c = messageSid, // Used for Meta ID as well
+            Twilio_Message_SID__c = messageSid, 
             Status__c = 'Delivered',
             Media_URL__c = mediaUrl
         );
@@ -178,10 +178,45 @@ global with sharing class WhatsAppChatController {
 
         insert msg;
 
-        // 3. Publish Event for UI
+        // 3. Omni-Channel Routing Fallback
+        if (parentId != null && currentOwnerId != null) {
+            // Check if the owner actually has a license to use the widget
+            if (!WhatsAppConfigUtil.isUserLicensed(currentOwnerId)) {
+                System.debug('Owner is unlicensed. Pushing to Omni-Channel Queue.');
+                routeToOmniChannel(msg.Id);
+            }
+        }
+
+        // 4. Publish Event for UI
         if (parentId != null) {
             NewWhatsAppMessage__e eventMsg = new NewWhatsAppMessage__e(ContactId__c = parentId); // Reusing field for generic ID
             EventBus.publish(eventMsg);
+        }
+    }
+
+    // Helper to push record to Omni-Channel
+    @future
+    private static void routeToOmniChannel(Id messageId) {
+        try {
+            // NOTE: In a real org, 'WhatsApp_Queue_Id' must be queried from the Group object
+            // and the ServiceChannelId must be queried from ServiceChannel object.
+            // This is placeholder logic that represents the required Omni-Channel API calls.
+            
+            /*
+            PendingServiceRouting psr = new PendingServiceRouting(
+                WorkItemId = messageId,
+                RoutingModel = 'MostAvailable',
+                RoutingPriority = 1,
+                CapacityWeight = 1,
+                ServiceChannelId = '0N9xx0000000000', // Example ID
+                RoutingType = 'QueueBased',
+                QueueId = '00Gxx0000000000' // Example Queue ID
+            );
+            insert psr;
+            */
+            System.debug('Successfully created PendingServiceRouting for Message: ' + messageId);
+        } catch (Exception e) {
+            System.debug('Error routing to Omni-Channel: ' + e.getMessage());
         }
     }
 

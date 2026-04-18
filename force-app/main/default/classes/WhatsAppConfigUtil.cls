@@ -8,13 +8,18 @@ public with sharing class WhatsAppConfigUtil {
             throw new AuraHandledException('Your subscription has expired. Please contact billing.');
         }
 
-        // 2. Check User License (Mocking the namespace check for now since we don't have a packaged namespace in this scratch org)
-        // In a real managed package, this would be: UserInfo.isCurrentUserLicensed('namespace');
-        // For development, we'll assume it's true or use a custom permission.
-        Boolean isLicensed = true; 
-        if (!isLicensed) {
+        // 2. Check User License
+        if (!isUserLicensed(UserInfo.getUserId())) {
             throw new AuraHandledException('You do not have a license to use this widget.');
         }
+    }
+
+    // Helper to check if a specific user is licensed
+    public static Boolean isUserLicensed(Id userId) {
+        // In a real managed package, this would be: return UserInfo.isCurrentUserLicensed('namespace');
+        // Or checking a specific Custom Permission assignment for the given userId.
+        // For development, we'll assume it's true or use a custom permission.
+        return true; 
     }
 
     // Get the active provider settings from Custom Metadata

@@ -1,0 +1,76 @@
+<template>
+    <lightning-card title="WhatsApp Integration Setup" icon-name="custom:custom19">
+        <div class="slds-p-around_medium">
+            <lightning-tabset>
+                <!-- API CONFIGURATION TAB -->
+                <lightning-tab label="1. API Provider">
+                    <div class="slds-m-top_medium slds-m-bottom_large">
+                        <h2 class="slds-text-heading_small slds-m-bottom_small">Select Provider</h2>
+                        <lightning-radio-group 
+                            name="providerGroup"
+                            options={providerOptions}
+                            value={selectedProvider}
+                            type="button"
+                            onchange={handleProviderChange}>
+                        </lightning-radio-group>
+                    </div>
+
+                    <template if:true={isTwilio}>
+                        <lightning-input label="Twilio Account SID" required value={twilioSid}></lightning-input>
+                        <lightning-input label="Twilio Auth Token" type="password" required value={twilioToken}></lightning-input>
+                        <lightning-input label="Business Phone Number" required placeholder="+1234567890" value={businessNumber}></lightning-input>
+                    </template>
+
+                    <template if:true={isMeta}>
+                        <lightning-input label="Meta App ID" required value={metaAppId}></lightning-input>
+                        <lightning-input label="Meta Access Token" type="password" required value={metaToken}></lightning-input>
+                        <lightning-input label="Phone Number ID" required value={metaPhoneId}></lightning-input>
+                        <lightning-input label="Business Phone Number" required placeholder="+1234567890" value={businessNumber}></lightning-input>
+                    </template>
+
+                    <div class="slds-m-top_large">
+                        <lightning-button variant="brand" label="Save API Settings" onclick={saveSettings}></lightning-button>
+                    </div>
+                </lightning-tab>
+
+                <!-- OBJECT MAPPING TAB -->
+                <lightning-tab label="2. Object Mappings">
+                    <div class="slds-m-top_medium">
+                        <p class="slds-m-bottom_medium">Define which objects the WhatsApp widget can be used on, and which fields contain the phone numbers.</p>
+                        
+                        <div class="slds-box slds-theme_default">
+                            <lightning-input label="Salesforce Object API Name" placeholder="e.g. Lead, Contact, Custom_Object__c" class="slds-m-bottom_small"></lightning-input>
+                            <lightning-input label="Primary Phone Field API Name" placeholder="e.g. MobilePhone" class="slds-m-bottom_small"></lightning-input>
+                            <lightning-input label="Country Code Field API Name (Optional)" placeholder="e.g. Country_Code__c"></lightning-input>
+                            
+                            <div class="slds-m-top_medium">
+                                <lightning-button label="Add Mapping" variant="neutral"></lightning-button>
+                            </div>
+                        </div>
+
+                        <!-- Table of existing mappings would go here -->
+                    </div>
+                </lightning-tab>
+
+                <!-- TEMPLATE SYNC TAB -->
+                <lightning-tab label="3. Templates">
+                    <div class="slds-m-top_medium">
+                        <lightning-button label="Sync Templates from Provider" variant="neutral" icon-name="utility:sync"></lightning-button>
+                        <p class="slds-m-top_small slds-text-color_weak">Fetch approved templates from Meta/Twilio so agents can use them when the 24-hour window is closed.</p>
+                    </div>
+                </lightning-tab>
+
+                <!-- ADVANCED SETTINGS TAB -->
+                <lightning-tab label="4. Data Archiving">
+                    <div class="slds-m-top_medium">
+                        <lightning-input type="toggle" label="Enable Auto-Archive Job" checked={isArchiveEnabled}></lightning-input>
+                        <div class="slds-m-top_small" if:true={isArchiveEnabled}>
+                            <lightning-input type="number" label="Delete media older than (months)" value="6"></lightning-input>
+                        </div>
+                    </div>
+                </lightning-tab>
+
+            </lightning-tabset>
+        </div>
+    </lightning-card>
+</template>

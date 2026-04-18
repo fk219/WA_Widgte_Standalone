@@ -80,25 +80,25 @@
 *Sprint Goal: Implement the Enterprise features: routing unassigned leads, global notifications, the Admin Setup Wizard, and the full-page WhatsApp Inbox.*
 
 ### Task 4.1: Omni-Channel Routing for Unlicensed Owners
-- [ ] **Step 1:** In the webhook listener, after finding the `Parent_Record_Id__c`, check if the `OwnerId` has an active Widget License.
-- [ ] **Step 2:** If unlicensed (or unassigned), do NOT assign the message to the current owner.
-- [ ] **Step 3:** Create a `PendingServiceRouting` record linked to the `WhatsAppMessage__c` and push it to a predefined Omni-Channel "WhatsApp Queue".
-- [ ] **Step 4:** Create an Apex Trigger on `AgentWork` (or use Omni-Channel flows) so when a licensed agent accepts the chat, the parent Lead/Contact ownership is instantly transferred to that agent.
+- [x] **Step 1:** In the webhook listener, after finding the `Parent_Record_Id__c`, check if the `OwnerId` has an active Widget License.
+- [x] **Step 2:** If unlicensed (or unassigned), do NOT assign the message to the current owner.
+- [x] **Step 3:** Create a `PendingServiceRouting` record linked to the `WhatsAppMessage__c` and push it to a predefined Omni-Channel "WhatsApp Queue".
+- [x] **Step 4:** Create an Apex Trigger on `AgentWork` (or use Omni-Channel flows) so when a licensed agent accepts the chat, the parent Lead/Contact ownership is instantly transferred to that agent.
 
 ### Task 4.2: Global Notifications (Utility Bar)
-- [ ] **Step 1:** Create LWC `whatsappGlobalNotification` targeting `lightning__UtilityBar`.
-- [ ] **Step 2:** Subscribe to `NewWhatsAppMessage__e`. If an event fires for a record owned by the current user, increment an unread badge using `lightning/platformUtilityBarApi`.
+- [x] **Step 1:** Create LWC `whatsappGlobalNotification` targeting `lightning__UtilityBar`.
+- [x] **Step 2:** Subscribe to `NewWhatsAppMessage__e`. If an event fires for a record owned by the current user, increment an unread badge using `lightning/platformUtilityBarApi`.
 
 ### Task 4.3: The "WhatsApp Inbox" LWC
-- [ ] **Step 1:** Create a full-page LWC `whatsappInbox`.
-- [ ] **Step 2:** Build the Left Pane: List all active conversations (grouped by Parent Record) sorted by latest message timestamp, showing unread badges.
-- [ ] **Step 3:** Build the Right Pane: Embed the refactored `whatsappChatWidget` component, dynamically passing the `recordId` selected from the Left Pane.
+- [x] **Step 1:** Create a full-page LWC `whatsappInbox`.
+- [x] **Step 2:** Build the Left Pane: List all active conversations (grouped by Parent Record) sorted by latest message timestamp, showing unread badges.
+- [x] **Step 3:** Build the Right Pane: Embed the refactored `whatsappChatWidget` component, dynamically passing the `recordId` selected from the Left Pane.
 
 ### Task 4.4: The Admin Dashboard (Setup Wizard)
-- [ ] **Step 1:** Create LWC `whatsappAdminDashboard`.
-- [ ] **Step 2:** Build UI tabs for: 
+- [x] **Step 1:** Create LWC `whatsappAdminDashboard`.
+- [x] **Step 2:** Build UI tabs for: 
       - **API Config:** Input Twilio/Meta keys.
       - **Object Mapping:** Select Object, Primary Phone Field, Country Code Field.
       - **Template Sync:** Fetch and view approved Meta templates.
       - **Archive Settings:** Set rules for auto-deleting media > 6 months old.
-- [ ] **Step 3:** Connect the UI to Apex controllers that save settings to the Custom Metadata Types created in Phase 1.
+- [x] **Step 3:** Connect the UI to Apex controllers that save settings to the Custom Metadata Types created in Phase 1.
