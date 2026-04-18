@@ -1,28 +1,29 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { subscribe, unsubscribe, onError } from 'lightning/empApi';
-import { loadScript } from 'lightning/platformResourceLoader';
 import loadMessages from '@salesforce/apex/WhatsAppChatController.loadMessages';
 import sendWhatsAppMessage from '@salesforce/apex/WhatsAppChatController.sendWhatsAppMessage';
-import sendTemplateMessage from '@salesforce/apex/WhatsAppChatController.sendTemplateMessage';
-import getContactDetails from '@salesforce/apex/WhatsAppChatController.getContactDetails';
+// Removed specific getContactDetails call since we are dynamic now
 
 const MESSAGES_PER_LOAD = 20;
 const CHANNEL_NAME = '/event/NewWhatsAppMessage__e';
 
 export default class WhatsappChatWidget extends LightningElement {
+    // Public API properties to make component dynamic on any record page
+    @api recordId;
+    @api objectApiName;
+
     // Private fields
     _subscription = null;
     _recordId;
 
     // Tracked properties
     @track isChatOpen = false;
-    @track currentContactId = null;
     @track messages = [];
     @track currentMessage = '';
     @track mediaUrl = '';
-    @track contactName = 'WhatsApp Chat';
-    @track contactInitials = 'WC';
+    @track recordName = 'WhatsApp Chat';
+    @track recordInitials = 'WA';
     @track isLoading = false;
     @track showLoadMoreButton = false;
     @track showNoMessages = false;
@@ -34,8 +35,29 @@ export default class WhatsappChatWidget extends LightningElement {
     @track totalMessages = 0;
     @track messageIds = new Set();
     @track lastMessageTimestamp = null;
+    
+    // 24-Hour Rule specific tracking
+    @track is24HourWindowOpen = true;
+    @track timeRemainingDisplay = '';
+    _timerInterval;
 
-    // Helper method to get status icon based on message status
+    connectedCallback() {
+        console.log('WhatsappChatWidget connected. recordId:', this.recordId, ' object:', this.objectApiName);
+        this.initializeEmpApi();
+        this.subscribeToMessageEvents();
+        this.initializeChat();
+        
+        // Start the countdown timer for the 24h rule
+        this._timerInterval = setInterval(() => this.calculate24HourWindow(), 60000); // Check every minute
+    }
+
+    disconnectedCallback() {
+        this.unsubscribeFromMessageEvents();
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
+        }
+    }
+
     getStatusIconForMessage(message) {
         if (!message) return '';
         
@@ -276,21 +298,24 @@ export default class WhatsappChatWidget extends LightningElement {
 
     initializeChat() {
         if (this.recordId) {
-            // Reset messages when switching contacts
-            if (this.currentContactId !== this.recordId) {
-                console.log('Contact changed, resetting chat state');
+            // Reset messages when switching records
+            if (this._recordId !== this.recordId) {
+                console.log('Record changed, resetting chat state');
                 this.messages = [];
                 this.messageIds.clear();
-                this.currentContactId = this.recordId;
+                this._recordId = this.recordId;
             }
             
-            this.fetchContactDetails();
+            // We removed fetchContactDetails since it's dynamic now. A generic label is fine for now, or you could query Name dynamically.
+            this.recordName = 'WhatsApp Conversation';
+            this.recordInitials = 'WA';
+
             this.loadInitialMessages();
         } else {
             console.warn('recordId is not available.');
             this.showNoMessages = true;
             this.showStartConversationButton = true;
-            this.contactName = 'No Contact Selected';
+            this.recordName = 'No Record Selected';
         }
     }
 
@@ -333,30 +358,25 @@ export default class WhatsappChatWidget extends LightningElement {
         if (this.isLoading || !this.recordId) return;
         
         this.isLoading = true;
-        console.log('Loading initial messages for contact:', this.recordId);
+        console.log('Loading initial messages for record:', this.recordId);
         
         try {
             this.offset = 0;
-            const result = await loadMessages({ contactId: this.recordId });
+            const result = await loadMessages({ recordId: this.recordId, objectApiName: this.objectApiName });
             
             if (result && Array.isArray(result)) {
-                // Filter messages to ensure they belong to the current contact (double safety)
-                const filteredMessages = result.filter(msg => 
-                    msg.Contact__c === this.recordId || 
-                    msg[this.FIELD_MAP?.CONTACT_FIELD] === this.recordId
-                );
-                
-                console.log('Received', result.length, 'messages, filtered to', filteredMessages.length, 'for current contact');
+                console.log('Received', result.length, 'messages');
                 
                 // Update message tracking
-                this.messages = filteredMessages;
-                this.messageIds = new Set(filteredMessages.map(msg => msg.Id));
-                this.totalMessages = filteredMessages.length;
-                this.showLoadMoreButton = filteredMessages.length >= MESSAGES_PER_LOAD;
+                this.messages = result;
+                this.messageIds = new Set(result.map(msg => msg.Id));
+                this.totalMessages = result.length;
+                this.showLoadMoreButton = result.length >= MESSAGES_PER_LOAD;
                 
                 // Update UI
                 this.updateUiBasedOnMessages();
                 this.scrollToBottom();
+                this.calculate24HourWindow();
             }
         } catch (error) {
             console.error('Error loading initial messages:', error);
@@ -373,7 +393,7 @@ export default class WhatsappChatWidget extends LightningElement {
         const scrollPosition = this.template.querySelector('.chat-messages-container').scrollTop;
         
         try {
-            const allMessages = await loadMessages({ contactId: this.recordId });
+            const allMessages = await loadMessages({ recordId: this.recordId, objectApiName: this.objectApiName });
             const currentLength = this.messages.length;
             
             if (allMessages.length > currentLength) {
@@ -462,8 +482,50 @@ export default class WhatsappChatWidget extends LightningElement {
         this.mediaUrl = event.target.value;
     }
 
+    calculate24HourWindow() {
+        if (!this.lastMessageTimestamp) {
+            this.is24HourWindowOpen = false;
+            this.timeRemainingDisplay = 'No recent messages';
+            return;
+        }
+
+        const lastInboundMsg = [...this.messages].reverse().find(m => m.Direction__c && m.Direction__c.toLowerCase() === 'inbound');
+        
+        if (!lastInboundMsg) {
+            this.is24HourWindowOpen = false;
+            this.timeRemainingDisplay = 'No inbound messages. Template required.';
+            return;
+        }
+
+        const lastTime = new Date(lastInboundMsg.Timestamp__c).getTime();
+        const now = Date.now();
+        const diffMs = now - lastTime;
+        const windowMs = 24 * 60 * 60 * 1000;
+
+        if (diffMs > windowMs) {
+            this.is24HourWindowOpen = false;
+            this.timeRemainingDisplay = '24-hour window closed. Template required.';
+        } else {
+            this.is24HourWindowOpen = true;
+            const remainingMs = windowMs - diffMs;
+            const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+            const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+            this.timeRemainingDisplay = `⏱️ ${hours}h ${minutes}m remaining`;
+        }
+    }
+
     get isSendButtonDisabledComputed() {
-        return (!this.currentMessage.trim() && !this.mediaUrl.trim()) || this.isLoading;
+        return (!this.currentMessage.trim() && !this.mediaUrl.trim()) || this.isInputDisabledComputed;
+    }
+    get isInputDisabledComputed() {
+        return this.isLoading || !this.is24HourWindowOpen;
+    }
+
+    get inputPlaceholderComputed() {
+        if (!this.is24HourWindowOpen) {
+            return "24-hour window closed. Use Template.";
+        }
+        return "Type a message...";
     }
 
     handleKeyUp = (event) => {
@@ -499,8 +561,8 @@ export default class WhatsappChatWidget extends LightningElement {
         }
 
         try {
-            // Store current contact ID and message content
-            const currentContactId = this.recordId;
+            // Store current record ID and message content
+            const currentRecordId = this.recordId;
             const currentMessage = this.currentMessage.trim();
             const mediaUrl = this.mediaUrl.trim();
             const timestamp = new Date().toISOString();
@@ -522,9 +584,10 @@ export default class WhatsappChatWidget extends LightningElement {
             Id: 'temp-' + Date.now(),
             Message__c: currentMessage,
             Direction__c: 'Outbound',
-            Contact__c: currentContactId,
+            Parent_Record_Id__c: currentRecordId,
             Timestamp__c: timestamp,
             Status__c: 'sending',
+            Sent_By__c: 'You',
             Media_URL__c: mediaUrl || null
         };
         
@@ -536,19 +599,20 @@ export default class WhatsappChatWidget extends LightningElement {
         this.showStartConversationButton = false;
         this.showNoMessages = false;
             
-            console.log('Sending message for contact:', currentContactId);
+            console.log('Sending message for record:', currentRecordId);
             
             try {
                 // Send the message to the server
                 const result = await sendWhatsAppMessage({
-                    contactId: currentContactId,
+                    recordId: currentRecordId,
+                    objectApiName: this.objectApiName,
                     message: currentMessage,
                     mediaUrl: mediaUrl
                 });
                 
-                // Ensure we're still on the same contact
-                if (this.recordId !== currentContactId) {
-                    console.log('Contact changed during message send, aborting update');
+                // Ensure we're still on the same record
+                if (this.recordId !== currentRecordId) {
+                    console.log('Record changed during message send, aborting update');
                     return;
                 }
                 
@@ -556,7 +620,7 @@ export default class WhatsappChatWidget extends LightningElement {
                 const realMessage = {
                     ...tempMessage,
                     Id: result.id || result.Id, // Handle different response formats
-                    Status__c: 'sent'
+                    Status__c: result.status || 'sent'
                 };
                 
                 // Replace temp message with real one
@@ -793,6 +857,14 @@ export default class WhatsappChatWidget extends LightningElement {
             const messageContent = document.createElement('div');
             messageContent.className = 'message-content';
             
+            // Sender Name
+            if (message.Sent_By__c) {
+                const senderName = document.createElement('div');
+                senderName.className = 'message-sender';
+                senderName.textContent = message.Sent_By__c;
+                messageContent.appendChild(senderName);
+            }
+
             // Message text
             if (message.Message__c) {
                 const messageText = document.createElement('div');
@@ -805,11 +877,40 @@ export default class WhatsappChatWidget extends LightningElement {
             if (message.Media_URL__c) {
                 const mediaDiv = document.createElement('div');
                 mediaDiv.className = 'message-media';
-                const mediaImage = document.createElement('img');
-                mediaImage.className = 'media-image';
-                mediaImage.src = message.Media_URL__c;
-                mediaImage.alt = 'Media';
-                mediaDiv.appendChild(mediaImage);
+                
+                // Determine media type by extension
+                const urlLower = message.Media_URL__c.toLowerCase();
+                if (urlLower.endsWith('.mp4') || urlLower.endsWith('.mov')) {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.className = 'media-video';
+                    const source = document.createElement('source');
+                    source.src = message.Media_URL__c;
+                    video.appendChild(source);
+                    mediaDiv.appendChild(video);
+                } else if (urlLower.endsWith('.mp3') || urlLower.endsWith('.ogg') || urlLower.endsWith('.wav')) {
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.className = 'media-audio';
+                    const source = document.createElement('source');
+                    source.src = message.Media_URL__c;
+                    audio.appendChild(source);
+                    mediaDiv.appendChild(audio);
+                } else if (urlLower.endsWith('.pdf')) {
+                    const embed = document.createElement('embed');
+                    embed.src = message.Media_URL__c;
+                    embed.type = 'application/pdf';
+                    embed.className = 'media-pdf';
+                    mediaDiv.appendChild(embed);
+                } else {
+                    // Default to image
+                    const mediaImage = document.createElement('img');
+                    mediaImage.className = 'media-image';
+                    mediaImage.src = message.Media_URL__c;
+                    mediaImage.alt = 'Media';
+                    mediaDiv.appendChild(mediaImage);
+                }
+                
                 messageContent.appendChild(mediaDiv);
             }
             

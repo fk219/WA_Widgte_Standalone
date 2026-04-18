@@ -56,23 +56,23 @@
 *Sprint Goal: Upgrade the existing LWC to sit on any record page, handle multimedia, and enforce the 24-hour compliance rule.*
 
 ### Task 3.1: Dynamic Context & Number Selection
-- [ ] **Step 1:** Update `whatsappChatWidget.js` to accept standard `@api recordId` and `@api objectApiName`.
-- [ ] **Step 2:** Add a UI dropdown allowing the user to select which phone number to text (e.g., Mobile vs Alternate) if multiple fields are mapped.
+- [x] **Step 1:** Update `whatsappChatWidget.js` to accept standard `@api recordId` and `@api objectApiName`.
+- [x] **Step 2:** Add a UI dropdown allowing the user to select which phone number to text (e.g., Mobile vs Alternate) if multiple fields are mapped.
 
 ### Task 3.2: Message Metadata & UI Polish
-- [ ] **Step 1:** Update the message renderer to clearly stamp the Sender's Name (Salesforce User or Customer) on each bubble.
-- [ ] **Step 2:** Ensure delivery status (Sent, Delivered, Read) with WhatsApp-style checkmarks is displayed correctly based on the webhook status.
-- [ ] **Step 3:** Ensure the widget is fully responsive for Desktop sidebars, Tablets, and the Salesforce Mobile App.
+- [x] **Step 1:** Update the message renderer to clearly stamp the Sender's Name (Salesforce User or Customer) on each bubble.
+- [x] **Step 2:** Ensure delivery status (Sent, Delivered, Read) with WhatsApp-style checkmarks is displayed correctly based on the webhook status.
+- [x] **Step 3:** Ensure the widget is fully responsive for Desktop sidebars, Tablets, and the Salesforce Mobile App.
 
 ### Task 3.3: 24-Hour Rule Compliance
-- [ ] **Step 1:** Add a getter `get is24HourWindowOpen()` in JS. Calculate difference between `lastMessageTimestamp` (if Inbound) and `Date.now()`.
-- [ ] **Step 2:** Add UI countdown timer (e.g., "14h 30m remaining").
-- [ ] **Step 3:** If the window is closed, disable the text `<textarea>` and show a "Send Template" button.
+- [x] **Step 1:** Add a getter `get is24HourWindowOpen()` in JS. Calculate difference between `lastMessageTimestamp` (if Inbound) and `Date.now()`.
+- [x] **Step 2:** Add UI countdown timer (e.g., "14h 30m remaining").
+- [x] **Step 3:** If the window is closed, disable the text `<textarea>` and show a "Send Template" button.
 
 ### Task 3.4: Multimedia Support
-- [ ] **Step 1:** Add file upload UI for Audio, Video, and PDF.
-- [ ] **Step 2:** Pass base64 data to Apex, save as `ContentVersion` (Salesforce Files), and generate a Public Link.
-- [ ] **Step 3:** Update the chat history renderer to display `<audio>`, `<video>`, and `<embed>` (PDF) tags natively in the chat bubbles.
+- [x] **Step 1:** Add file upload UI for Audio, Video, and PDF.
+- [x] **Step 2:** Pass base64 data to Apex, save as `ContentVersion` (Salesforce Files), and generate a Public Link.
+- [x] **Step 3:** Update the chat history renderer to display `<audio>`, `<video>`, and `<embed>` (PDF) tags natively in the chat bubbles.
 
 ---
 
