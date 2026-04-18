@@ -80,6 +80,11 @@ In addition to the record-level widget, the app provides a full-page "Inbox" exp
 *   **Unread Indicators:** The left pane displays unread message badges.
 *   **Global Access:** Agents can manage 20 different conversations simultaneously from this single UI without needing to open 20 different Lead records.
 
+### 6.3 Global Notifications & Utility Bar
+Agents must know when a customer messages them, even if they are viewing a completely different record.
+*   **Utility Bar Component:** The app will include a small LWC designed for the Salesforce Utility Bar (the persistent bar at the bottom of the screen). It acts as a global notification hub. If the agent is on Lead #2 and Lead #1 sends a message, the Utility Bar icon will flash/badge with an unread count.
+*   **Native Custom Notifications:** Admins will have a configuration option to route alerts to Salesforce's native "Bell" icon (Custom Notification Type) instead of, or in addition to, the custom Utility Bar component. Clicking the notification will route the agent directly to the relevant Lead record or the WhatsApp Inbox.
+
 ## 7. Brainstorming: Missing Features & Considerations
 
 *   **Opt-Out / Consent Management:** Critical for compliance (GDPR/TCPA). We need a mechanism to flag a record as "Do Not WhatsApp" and physically block the widget from sending outbound messages to that number.
