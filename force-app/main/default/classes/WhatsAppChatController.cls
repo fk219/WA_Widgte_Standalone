@@ -158,6 +158,12 @@ global with sharing class WhatsAppChatController {
             }
         }
 
+        // Handle Opt-Out keywords
+        String messageLower = body != null ? body.toLowerCase().trim() : '';
+        if (messageLower == 'stop' || messageLower == 'unsubscribe' || messageLower == 'opt out') {
+            handleOptOut(normalizedPhone);
+        }
+
         // 2. Create Message
         WhatsAppMessage__c msg = new WhatsAppMessage__c(
             Message__c = String.isNotBlank(body) ? body : '(Media Message)',
@@ -238,6 +244,21 @@ global with sharing class WhatsAppChatController {
             // Notify UI
             NewWhatsAppMessage__e eventMsg = new NewWhatsAppMessage__e(ContactId__c = msg.Parent_Record_Id__c);
             EventBus.publish(eventMsg);
+        }
+    }
+
+    private static void handleOptOut(String phoneNumber) {
+        try {
+            // Check if already opted out
+            List<WhatsApp_Opt_Out__c> existing = [SELECT Id FROM WhatsApp_Opt_Out__c WHERE Phone_Number__c = :phoneNumber LIMIT 1];
+            if (existing.isEmpty()) {
+                insert new WhatsApp_Opt_Out__c(
+                    Phone_Number__c = phoneNumber,
+                    Opted_Out_Date__c = Datetime.now()
+                );
+            }
+        } catch (Exception e) {
+            System.debug('Error creating opt-out record: ' + e.getMessage());
         }
     }
 

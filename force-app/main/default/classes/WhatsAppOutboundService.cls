@@ -38,6 +38,12 @@ public with sharing class WhatsAppOutboundService {
         String combinedPhone = (String.isNotBlank(rawCountryCode) ? rawCountryCode : '') + rawPhone;
         String toPhoneNumber = normalizePhone(combinedPhone);
 
+        // Check if customer opted out
+        List<WhatsApp_Opt_Out__c> optOuts = [SELECT Id FROM WhatsApp_Opt_Out__c WHERE Phone_Number__c = :toPhoneNumber LIMIT 1];
+        if (!optOuts.isEmpty()) {
+            throw new AuraHandledException('This customer has opted out of WhatsApp messages. Outbound messages are blocked.');
+        }
+
         // 3. Get Active Provider Settings
         WhatsApp_Provider_Setting__mdt settings = WhatsAppConfigUtil.getActiveProviderSettings();
         
