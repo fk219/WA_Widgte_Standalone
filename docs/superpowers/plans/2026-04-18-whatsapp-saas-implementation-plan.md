@@ -31,24 +31,24 @@
 *Sprint Goal: Refactor the Apex controller to dynamically choose the API provider and handle incoming/outgoing messages for both Twilio and Meta Official API.*
 
 ### Task 2.1: The Config & License Utility
-- [ ] **Step 1:** Create `WhatsAppConfigUtil.cls`.
-- [ ] **Step 2:** Implement `checkLicenseStatus()` to read `App_License_Status__c` and verify `UserInfo.isCurrentUserLicensed()`. Throw `AuraHandledException` if unlicensed.
-- [ ] **Step 3:** Implement `getActiveProviderSettings()` to query `WhatsApp_Provider_Setting__mdt`.
+- [x] **Step 1:** Create `WhatsAppConfigUtil.cls`.
+- [x] **Step 2:** Implement `checkLicenseStatus()` to read `App_License_Status__c` and verify `UserInfo.isCurrentUserLicensed()`. Throw `AuraHandledException` if unlicensed.
+- [x] **Step 3:** Implement `getActiveProviderSettings()` to query `WhatsApp_Provider_Setting__mdt`.
 
 ### Task 2.2: Dual API Outbound Service
-- [ ] **Step 1:** Create `WhatsAppOutboundService.cls`.
-- [ ] **Step 2:** Port existing Twilio outbound logic into `sendViaTwilio(params)`.
-- [ ] **Step 3:** Implement `sendViaMeta(params)` using the official WhatsApp Cloud API endpoint (`https://graph.facebook.com/v17.0/{Phone_Number_ID}/messages`).
-- [ ] **Step 4:** Create a master `sendMessage(recordId, objectApiName, message, mediaUrl)` method that:
+- [x] **Step 1:** Create `WhatsAppOutboundService.cls`.
+- [x] **Step 2:** Port existing Twilio outbound logic into `sendViaTwilio(params)`.
+- [x] **Step 3:** Implement `sendViaMeta(params)` using the official WhatsApp Cloud API endpoint (`https://graph.facebook.com/v17.0/{Phone_Number_ID}/messages`).
+- [x] **Step 4:** Create a master `sendMessage(recordId, objectApiName, message, mediaUrl)` method that:
       1. Checks license.
       2. Gets dynamic phone number via `WhatsApp_Object_Mapping__mdt`.
       3. Checks the active provider (Twilio or Meta) and routes to the correct send method.
 
 ### Task 2.3: Dual Webhook Listener
-- [ ] **Step 1:** Refactor `@RestResource` in `WhatsAppChatController.cls`.
-- [ ] **Step 2:** Implement signature validation for both Twilio (`X-Twilio-Signature`) and Meta (`X-Hub-Signature-256`).
-- [ ] **Step 3:** Parse incoming payloads dynamically based on the provider format.
-- [ ] **Step 4:** Dynamically search across all mapped objects (Lead, Contact, etc.) to find the matching `Parent_Record_Id__c` for the incoming phone number.
+- [x] **Step 1:** Refactor `@RestResource` in `WhatsAppChatController.cls`.
+- [x] **Step 2:** Implement signature validation for both Twilio (`X-Twilio-Signature`) and Meta (`X-Hub-Signature-256`).
+- [x] **Step 3:** Parse incoming payloads dynamically based on the provider format.
+- [x] **Step 4:** Dynamically search across all mapped objects (Lead, Contact, etc.) to find the matching `Parent_Record_Id__c` for the incoming phone number.
 
 ---
 
